@@ -6,6 +6,7 @@ use log::{debug, info};
 
 use crate::error::*;
 use std::ops::Range;
+use image::{GenericImage, GenericImageView, ImageBuffer, RgbImage, Rgb};
 
 mod error;
 
@@ -24,10 +25,14 @@ pub struct ImageInfo {
     pub oblong_pixel: bool,
 }
 
+#[derive(Copy, Clone, Debug)]
+enum ColorMode { Palette16, Palette256 }
+
 /// MAG decoder
 pub struct Decoder {
     info: ImageInfo,
     header_offset: u32,
+    color_mode: ColorMode,
     buf: Vec<u8>,
 }
 
@@ -76,24 +81,33 @@ impl Decoder {
         }
         header_buf.seek(SeekFrom::Current(2))?;
         let screen_mode = header_buf.read_u8()?;
-        let num_colors = if screen_mode & 0x80 != 0 { 256 } else { 16 };
-        dbg!(screen_mode, num_colors);
+        let color_mode =
+            if screen_mode & 0x80 != 0 { ColorMode::Palette256 } else { ColorMode::Palette16 };
+        dbg!(screen_mode, color_mode);
         let x = header_buf.read_u16::<LE>()?;
         let y = header_buf.read_u16::<LE>()?;
         let end_x = header_buf.read_u16::<LE>()?;
         let end_y = header_buf.read_u16::<LE>()?;
         dbg!(x, y, end_x, end_y);
+        let pixel_unit = match color_mode {
+            ColorMode::Palette16 => 8,
+            ColorMode::Palette256 => 4,
+        };
 
         Ok(Decoder {
             info: ImageInfo {
                 x,
                 y,
-                width: end_x - x + 1,
+                width: (((end_x / pixel_unit) - (x / pixel_unit)) + 1) * pixel_unit,
                 height: end_y - y + 1,
-                num_colors,
+                num_colors: match color_mode {
+                    ColorMode::Palette16 => 16,
+                    ColorMode::Palette256 => 256,
+                },
                 oblong_pixel: screen_mode & 1 != 0,
             },
             header_offset,
+            color_mode,
             buf,
         })
     }
@@ -118,12 +132,19 @@ impl Decoder {
         assert_eq!(header_buf.position() as u32, HEADER_SIZE);
 
         let palette = &buf[range(self.header_offset + HEADER_SIZE, (self.info.num_colors * 3) as u32)];
-
         let flag_a = &buf[range(self.header_offset + flag_a_offset, flag_a_size)];
         let flag_b = &buf[range(self.header_offset + flag_b_offset, flag_b_size)];
         let pixels = &buf[range(self.header_offset + pixel_offset, pixel_size)];
         dbg!(flag_a.len(), flag_b.len(), pixels.len());
         dbg!(buf.len() - (self.header_offset + pixel_offset + pixel_size) as usize);
+
+        let mut img: RgbImage = ImageBuffer::new(self.info.width as u32, self.info.height as u32);
+
+        for x in 10..100 {
+            img.put_pixel(x, 10, Rgb([128, 128, 128]));
+        }
+
+        img.save("test.png").unwrap();
 
         Ok(())
     }
