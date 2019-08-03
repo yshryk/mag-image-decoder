@@ -6,7 +6,10 @@ use simple_logger;
 fn main() {
     simple_logger::init().expect("logger init error");
 
-    let file = File::open("SAMPLE.MAG").expect("failed to open file");
+    let path = "FGALS.MAG";
+//    let path = "CPU&WAKA.MAG";
+//    let path = "OENM0001.MAG";
+    let file = File::open(path).expect("failed to open file");
     let decoder = Decoder::new(BufReader::new(file)).expect("failed to read header");
     let header = decoder.info();
     dbg!(header);
