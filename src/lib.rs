@@ -114,7 +114,6 @@ impl Decoder {
         let (memo, _, _) = encoding.decode(&memo);
         debug!("memo: '{}'", memo);
 
-
         if header_buf.read_u8()? != 0 {
             return Err(Error::InvalidFormat("header offset 0x00".into()));
         }
@@ -122,12 +121,13 @@ impl Decoder {
         let screen_mode = header_buf.read_u8()?;
         let color_mode =
             if screen_mode & 0x80 != 0 { ColorMode::Palette256 } else { ColorMode::Palette16 };
-        dbg!(screen_mode, color_mode);
+        debug!("screen_mode: {}, color_mode: {:?}", screen_mode, color_mode);
+
         let x = header_buf.read_u16::<LE>()?;
         let y = header_buf.read_u16::<LE>()?;
         let end_x = header_buf.read_u16::<LE>()?;
         let end_y = header_buf.read_u16::<LE>()?;
-        dbg!(x, y, end_x, end_y);
+        debug!("x: {}, y: {}, end_x: {}, end_y: {}", x, y, end_x, end_y);
         let pixel_unit = pixel_unit(color_mode);
 
         Ok(Decoder {
@@ -168,15 +168,16 @@ impl Decoder {
         let flag_a_size = flag_b_offset - flag_a_offset;
         let pixel_offset = header_buf.read_u32::<LE>()?;
         let pixel_size = header_buf.read_u32::<LE>()?;
-        dbg!(flag_a_offset, flag_b_offset, flag_a_size, flag_b_size, pixel_offset, pixel_size);
+        debug!("flag_a_offset: {}, flag_b_offset: {}, flag_a_size: {}, flag_b_size: {}, pixel_offset: {}, pixel_size: {}",
+               flag_a_offset, flag_b_offset, flag_a_size, flag_b_size, pixel_offset, pixel_size);
         assert_eq!(header_buf.position() as u32, HEADER_SIZE);
 
         let palette = &buf[range(self.header_offset + HEADER_SIZE, (self.info.num_colors * 3) as u32)];
         let flag_a = &buf[range(self.header_offset + flag_a_offset, flag_a_size)];
         let flag_b = &buf[range(self.header_offset + flag_b_offset, flag_b_size)];
         let pixels = &buf[range(self.header_offset + pixel_offset, pixel_size)];
-        dbg!(flag_a.len(), flag_b.len(), pixels.len());
-        dbg!(buf.len() - (self.header_offset + pixel_offset + pixel_size) as usize);
+//        dbg!(flag_a.len(), flag_b.len(), pixels.len());
+//        dbg!(buf.len() - (self.header_offset + pixel_offset + pixel_size) as usize);
 
         let mut img: RgbImage = ImageBuffer::new(self.info.width as u32, self.info.height as u32);
         let pixel_unit = pixel_unit(self.color_mode);
