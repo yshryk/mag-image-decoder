@@ -104,8 +104,6 @@ impl Decoder {
         let header_offset = 31 + comment.len() as u32 + 1;
         dbg!(header_offset);
         let mut header_buf = Cursor::new(buf[range(header_offset, HEADER_SIZE)].to_owned());
-//        header_buf.set_position((31 + comment.len() + 1) as u64);
-//        dbg!(header_buf.position());
         let (comment, _, _) = encoding.decode(&comment);
         debug!("comment: '{}'", comment);
 
@@ -210,61 +208,13 @@ impl Decoder {
                     }
                 } else {
                     dst_x += self.copy_pixel_unit(&mut img, dst_x, y, copy_vec[flag as usize]);
-                    //copy_pixels
-                    /*
-                    let copy_from = copy_vec[flag as usize];
-                    let p = img[(dst_x - (copy_from.0 * 4), y - copy_from.1)];
-                    img.put_pixel(dst_x, y, p);
-                    dst_x += 1;
-                    let p = img[(dst_x - (copy_from.0 * 4), y - copy_from.1)];
-                    img.put_pixel(dst_x, y, p);
-                    dst_x += 1;
-                    let p = img[(dst_x - (copy_from.0 * 4), y - copy_from.1)];
-                    img.put_pixel(dst_x, y, p);
-                    dst_x += 1;
-                    let p = img[(dst_x - (copy_from.0 * 4), y - copy_from.1)];
-                    img.put_pixel(dst_x, y, p);
-                    dst_x += 1;
-                    */
-                    // TODO: copy
-//                    let white = Rgb([128, 128, 128]);
-//                    img.put_pixel(dst_x, y, white);
-//                    img.put_pixel(dst_x + 1, y, white);
-//                    img.put_pixel(dst_x + 2, y, white);
-//                    img.put_pixel(dst_x + 3, y, white);
-//                    dst_x += 4;
-//                    dbg!(dst_x);
                 }
             };
 
             for x in 0..num_x_units as usize {
-                /*
-                let flag = nibble_high(line_flags[x]);
-                if flag == 0 {
-                    match self.color_mode {
-                        ColorMode::Palette16 => {
-                            for _ in 0..=1 {
-                                let pixel_byte = pixels.read_u8()?;
-                                img.put_pixel(dst_x, y, palette.rgb(nibble_high(pixel_byte)));
-                                dst_x += 1;
-                                img.put_pixel(dst_x, y, palette.rgb(nibble_low(pixel_byte)));
-                                dst_x += 1;
-
-                            }
-                        }
-                        ColorMode::Palette256 => unimplemented!("256 mode"),
-                    }
-                } else {
-//                    copy_pixels
-//                     TODO: copy
-                }
-                */
-
-                let flag = nibble_high(line_flags[x]);
-                decode_nibble(flag);
-
-                let flag = nibble_low(line_flags[x]);
-                decode_nibble(flag);
+                let flag = line_flags[x];
+                decode_nibble(nibble_high(flag));
+                decode_nibble(nibble_low(flag));
             }
         }
 
@@ -275,7 +225,6 @@ impl Decoder {
     }
 
     fn init_copy_vec(&self) -> Vec<(u32, u32)> {
-//        let x = [0, 2, 4, 8, 0, 2, 0, 2, 4, 0, 2, 4, 0, 2, 4, 0];
         let x = [0, 1, 2, 4, 0, 1, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0];
         let y = [0, 0, 0, 0, 1, 1, 2, 2, 2, 4, 4, 4, 8, 8, 8, 16];
         x.iter().zip(y.iter()).map(|(a, b)| (*a, *b)).collect()
@@ -290,8 +239,7 @@ impl Decoder {
         let src_y = y - copy_from.1;
 
         for i in 0..copy_pixels {
-            let p = img[(src_x + i, src_y)];
-            img.put_pixel(x + i, y, p);
+            img.put_pixel(x + i, y, img[(src_x + i, src_y)]);
         }
 
         copy_pixels
