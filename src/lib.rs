@@ -191,6 +191,7 @@ impl Decoder {
                 }
             }
 
+            let copy_vec = self.init_copy_vec();
             let mut dst_x = 0;
 
             let mut decode_nibble = |flag: u8| {
@@ -208,14 +209,30 @@ impl Decoder {
                         ColorMode::Palette256 => unimplemented!("256 mode"),
                     }
                 } else {
+                    dst_x += self.copy_pixel_unit(&mut img, dst_x, y, copy_vec[flag as usize]);
                     //copy_pixels
+                    /*
+                    let copy_from = copy_vec[flag as usize];
+                    let p = img[(dst_x - (copy_from.0 * 4), y - copy_from.1)];
+                    img.put_pixel(dst_x, y, p);
+                    dst_x += 1;
+                    let p = img[(dst_x - (copy_from.0 * 4), y - copy_from.1)];
+                    img.put_pixel(dst_x, y, p);
+                    dst_x += 1;
+                    let p = img[(dst_x - (copy_from.0 * 4), y - copy_from.1)];
+                    img.put_pixel(dst_x, y, p);
+                    dst_x += 1;
+                    let p = img[(dst_x - (copy_from.0 * 4), y - copy_from.1)];
+                    img.put_pixel(dst_x, y, p);
+                    dst_x += 1;
+                    */
                     // TODO: copy
-                    let white = Rgb([128, 128, 128]);
-                    img.put_pixel(dst_x, y, white);
-                    img.put_pixel(dst_x + 1, y, white);
-                    img.put_pixel(dst_x + 2, y, white);
-                    img.put_pixel(dst_x + 3, y, white);
-                    dst_x += 4;
+//                    let white = Rgb([128, 128, 128]);
+//                    img.put_pixel(dst_x, y, white);
+//                    img.put_pixel(dst_x + 1, y, white);
+//                    img.put_pixel(dst_x + 2, y, white);
+//                    img.put_pixel(dst_x + 3, y, white);
+//                    dst_x += 4;
 //                    dbg!(dst_x);
                 }
             };
@@ -255,5 +272,28 @@ impl Decoder {
         img.save("test.png").unwrap();
 
         Ok(())
+    }
+
+    fn init_copy_vec(&self) -> Vec<(u32, u32)> {
+//        let x = [0, 2, 4, 8, 0, 2, 0, 2, 4, 0, 2, 4, 0, 2, 4, 0];
+        let x = [0, 1, 2, 4, 0, 1, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0];
+        let y = [0, 0, 0, 0, 1, 1, 2, 2, 2, 4, 4, 4, 8, 8, 8, 16];
+        x.iter().zip(y.iter()).map(|(a, b)| (*a, *b)).collect()
+    }
+
+    fn copy_pixel_unit(&self, img: &mut RgbImage, x: u32, y: u32, copy_from: (u32, u32)) -> u32 {
+        let copy_pixels = match self.color_mode {
+            ColorMode::Palette16 => 4,
+            ColorMode::Palette256 => 2,
+        };
+        let src_x = x - (copy_from.0 * copy_pixels);
+        let src_y = y - copy_from.1;
+
+        for i in 0..copy_pixels {
+            let p = img[(src_x + i, src_y)];
+            img.put_pixel(x + i, y, p);
+        }
+
+        copy_pixels
     }
 }
