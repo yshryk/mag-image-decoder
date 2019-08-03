@@ -1,12 +1,12 @@
-use std::io::{self, Cursor, Read, Seek, SeekFrom};
+use std::io::{Cursor, Read, Seek, SeekFrom};
 
 use byteorder::{LittleEndian as LE, ReadBytesExt};
 use encoding_rs::*;
-use log::{debug, info};
+use log::debug;
 
 use crate::error::*;
 use std::ops::Range;
-use image::{GenericImage, GenericImageView, ImageBuffer, RgbImage, Rgb};
+use image::{ImageBuffer, RgbImage, Rgb};
 use bit_vec::BitVec;
 
 mod error;
@@ -46,6 +46,7 @@ pub struct Decoder {
     buf: Vec<u8>,
 }
 
+// TODO: 最初に並べ替えておく
 struct Palette {
     grb_colors: Vec<u8>,
 }
@@ -68,9 +69,6 @@ const MAGIC_NUMBER: &[u8; 8] = b"MAKI02  ";
 const TEXT_ENCODING: &str = "Shift_JIS";
 const HEADER_SIZE: u32 = 32;
 
-fn range_u(start: usize, size: usize) -> Range<usize> {
-    start..start + size
-}
 
 fn range(start: u32, size: u32) -> Range<usize> {
     start as usize..(start + size) as usize
@@ -158,6 +156,7 @@ impl Decoder {
         &self.info
     }
 
+    /// Decodes to RGB image buffer
     pub fn decode(&self) -> Result<RgbImage> {
         let buf = &self.buf;
         let mut header_buf = Cursor::new(buf[range(self.header_offset, HEADER_SIZE)].to_owned());
@@ -182,17 +181,13 @@ impl Decoder {
         let mut img: RgbImage = ImageBuffer::new(self.info.width as u32, self.info.height as u32);
         let pixel_unit = pixel_unit(self.color_mode);
         let num_x_units = self.info.width / pixel_unit;
-        dbg!(num_x_units);
 
         let mut flag_a_bits = BitVec::from_bytes(flag_a).into_iter();
         let mut flag_b = Cursor::new(flag_b);
         let mut pixels = Cursor::new(pixels);
         let palette = Palette::new(palette);
         let mut line_flags = vec![0u8; num_x_units as usize];
-        let copy_pixels = match self.color_mode {
-            ColorMode::Palette16 => 4,
-            ColorMode::Palette256 => 2,
-        };
+        let copy_vec = self.init_copy_vec();
 
         for y in 0..self.info.height as u32 {
             for x in 0..num_x_units as usize {
@@ -201,14 +196,12 @@ impl Decoder {
                 }
             }
 
-            let copy_vec = self.init_copy_vec();
             let mut dst_x = 0;
-
             let mut decode_nibble = |flag: u8| {
                 if flag == 0 {
                     match self.color_mode {
                         ColorMode::Palette16 => {
-                            for i in 0..=1 {
+                            for _ in 0..=1 {
                                 let pixel_byte = pixels.read_u8().unwrap();
                                 img.put_pixel(dst_x, y, palette.rgb(nibble_high(pixel_byte)));
                                 dst_x += 1;
