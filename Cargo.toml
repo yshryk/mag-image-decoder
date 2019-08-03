@@ -1,0 +1,22 @@
+[package]
+name = "mag-image-decoder"
+version = "0.1.0"
+authors = ["yasuhara <yasuhara@gmail.com>"]
+edition = "2018"
+
+
+[lib]
+name = "mag_image_decoder"
+
+[[bin]]
+name = "mag_image_decoder"
+path = "src/main.rs"
+doc = false
+
+[dependencies]
+log = "0.4"
+simple_logger = "1.0"
+failure = "0.1"
+failure_derive = "0.1"
+byteorder = "1.0"
+encoding_rs = "0.8"

@@ -1,0 +1,6 @@
+^target/
+syntax: glob
+*.rs.bk
+*.rs.bak
+*.iml
+.idea
