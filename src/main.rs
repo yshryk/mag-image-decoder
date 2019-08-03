@@ -14,7 +14,8 @@ fn main() {
     let header = decoder.info();
     dbg!(header);
 
-    decoder.decode().expect("failed to decode");
+    let img = decoder.decode().expect("failed to decode");
+    img.save("test.png").expect("failed to save");
 
     println!("ok");
 }

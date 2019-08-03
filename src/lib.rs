@@ -12,15 +12,24 @@ use bit_vec::BitVec;
 mod error;
 
 /// Represents metadata of an image.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ImageInfo {
+    /// The machine name (max 4 characters).
+    /// e.g. PC98, PC88, ESEQ, X68K, MSX2
+    pub machine_code: String,
+    /// The author's name
+    pub user_name: String,
+    /// The author's memo
+    pub memo: String,
+    /// The x position
     pub x: u16,
+    /// The y position
     pub y: u16,
     /// The width of the image, in pixels
     pub width: u16,
     /// The height of the image, in pixels
     pub height: u16,
-    /// The number of colors
+    /// The number of colors, 16 of 256
     pub num_colors: u16,
     /// The pixel shape
     pub oblong_pixel: bool,
@@ -99,13 +108,13 @@ impl Decoder {
         let (user_name, _, _) = encoding.decode(&buf[range(12, 19)]);
         debug!("machine_code: '{}', user_name: '{}'", machine_code, user_name);
 
-        let comment = &buf.iter().skip(31).take_while(|&b| *b != 0x1au8)
+        let memo = &buf.iter().skip(31).take_while(|&b| *b != 0x1au8)
             .cloned().collect::<Vec<u8>>();
-        let header_offset = 31 + comment.len() as u32 + 1;
-        dbg!(header_offset);
+        let header_offset = 31 + memo.len() as u32 + 1;
+        debug!("header_offset: {}", header_offset);
         let mut header_buf = Cursor::new(buf[range(header_offset, HEADER_SIZE)].to_owned());
-        let (comment, _, _) = encoding.decode(&comment);
-        debug!("comment: '{}'", comment);
+        let (memo, _, _) = encoding.decode(&memo);
+        debug!("memo: '{}'", memo);
 
 
         if header_buf.read_u8()? != 0 {
@@ -125,6 +134,9 @@ impl Decoder {
 
         Ok(Decoder {
             info: ImageInfo {
+                machine_code,
+                user_name: user_name.to_string(),
+                memo: memo.to_string(),
                 x,
                 y,
                 width: (((end_x / pixel_unit) - (x / pixel_unit)) + 1) * pixel_unit,
@@ -142,11 +154,11 @@ impl Decoder {
     }
 
     /// Gets metadata
-    pub fn info(&self) -> ImageInfo {
-        self.info
+    pub fn info(&self) -> &ImageInfo {
+        &self.info
     }
 
-    pub fn decode(&self) -> Result<()> {
+    pub fn decode(&self) -> Result<RgbImage> {
         let buf = &self.buf;
         let mut header_buf = Cursor::new(buf[range(self.header_offset, HEADER_SIZE)].to_owned());
         header_buf.seek(SeekFrom::Start(12))?;
@@ -219,9 +231,7 @@ impl Decoder {
         }
 
 
-        img.save("test.png").unwrap();
-
-        Ok(())
+        Ok(img)
     }
 
     fn init_copy_vec(&self) -> Vec<(u32, u32)> {
