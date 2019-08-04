@@ -22,7 +22,7 @@ use byteorder::{LittleEndian as LE, ReadBytesExt};
 use encoding_rs::*;
 use log::debug;
 
-use crate::error::*;
+pub use crate::error::*;
 use std::ops::Range;
 use image::{ImageBuffer, RgbImage, Rgb, imageops, FilterType};
 use bit_vec::BitVec;
