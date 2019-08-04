@@ -5,6 +5,7 @@ use simple_logger;
 use log::info;
 use structopt::StructOpt;
 use std::path::PathBuf;
+use std::{fs, process};
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "magdecode", author = "", about = "\
@@ -27,13 +28,24 @@ struct Opt {
 fn main() {
     match run(Opt::from_args()) {
         Ok(_) => (),
-        Err(e) => eprintln!("Error: {}", e)
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            process::exit(1);
+        }
     }
 }
 
 fn run(opt: Opt) -> Result<(), String> {
     if opt.verbose > 0 {
         simple_logger::init().expect("logger init error");
+    }
+
+    if let Some(dir) = &opt.out_dir {
+        if !dir.exists() {
+            info!("create directory: '{}'", dir.display());
+            fs::create_dir_all(dir)
+                .map_err(|e| format!("'{}': {}", dir.display(), e))?;
+        }
     }
 
     if opt.files.is_empty() {
@@ -47,8 +59,13 @@ fn run(opt: Opt) -> Result<(), String> {
             let header = decoder.info();
             info!("{:?}", header);
 
-            let output_path = "test.png";
-            info!("output_path: '{}'", output_path);
+            let mut output_path = match &opt.out_dir {
+                Some(dir) => dir.clone(),
+                None => PathBuf::new()
+            };
+            output_path.push(input_file);
+            output_path.set_extension("png");
+            info!("output_path: '{}'", output_path.display());
             let img = decoder.decode().map_err(|e| format!("{}", e))?;
             img.save(output_path).map_err(|e| format!("failed to save: {}", e))?;
             info!("ok");
