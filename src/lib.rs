@@ -1,4 +1,4 @@
-//! MAG v2 image decoder
+//! MAG image decoder
 //!
 //! [MAG format](https://ja.wikipedia.org/?curid=115972) is also known as MAKI02, Maki-chan Graphics.
 //!
@@ -11,6 +11,7 @@
 //! let file = File::open("SAMPLE.MAG").unwrap();
 //! let decoder = Decoder::new(BufReader::new(file)).unwrap();
 //! let header = decoder.info();
+//! println!("{:?}", header);
 //! let img = decoder.decode().unwrap();
 //! img.save("SAMPLE.png").unwrap();
 //! ```

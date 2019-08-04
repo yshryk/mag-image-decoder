@@ -3,6 +3,16 @@ name = "mag-image-decoder"
 version = "0.1.0"
 authors = ["yasuhara <yasuhara@gmail.com>"]
 edition = "2018"
+description = "MAG image decoder"
+repository = "https://bitbucket.org/yshryk/mag-image-decoder"
+documentation = "https://docs.rs/mag-image-decoder"
+license = "MIT / Apache-2.0"
+readme = "README.md"
+keywords = ["mag", "decoder", "image"]
+categories = ["multimedia::images", "command-line-utilities"]
+exclude = [
+    "*.iml",
+]
 
 
 [lib]
