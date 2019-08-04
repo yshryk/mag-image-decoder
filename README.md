@@ -7,9 +7,7 @@
 ## Supported Features
 * 16-color mode
 * 256-color mode
-
-## Unsupported Features
-* 200-line mode
+* 200-line mode, non-square (rectangular) pixel aspect ratio
 
 ## Decoding
 

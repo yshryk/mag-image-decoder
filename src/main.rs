@@ -7,8 +7,8 @@ use log::info;
 fn main() {
     simple_logger::init().expect("logger init error");
 
-    let path = "SAMPLE.MAG";
-//    let path = "SAMPLE2.MAG";
+//    let path = "SAMPLE.MAG";
+    let path = "SAMPLE2.MAG";
 //    let path = "FGALS.MAG";
 //    let path = "CPU&WAKA.MAG";
 //    let path = "OENM0001.MAG";

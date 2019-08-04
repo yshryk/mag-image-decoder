@@ -24,7 +24,7 @@ use log::debug;
 
 use crate::error::*;
 use std::ops::Range;
-use image::{ImageBuffer, RgbImage, Rgb};
+use image::{ImageBuffer, RgbImage, Rgb, imageops, FilterType};
 use bit_vec::BitVec;
 
 pub mod error;
@@ -49,8 +49,8 @@ pub struct ImageInfo {
     pub height: u16,
     /// The number of colors, 16 or 256
     pub num_colors: u16,
-    /// The pixel aspect ratio
-    pub oblong_pixel: bool,
+    /// The pixel aspect ratio flag
+    pub is_200_line_mode: bool,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -161,7 +161,7 @@ impl Decoder {
                     ColorMode::Palette16 => 16,
                     ColorMode::Palette256 => 256,
                 },
-                oblong_pixel: screen_mode & 1 != 0,
+                is_200_line_mode: screen_mode & 1 != 0,
             },
             header_offset,
             color_mode,
@@ -176,11 +176,6 @@ impl Decoder {
 
     /// Decodes to RGB image buffer
     pub fn decode(&self) -> Result<RgbImage> {
-        if self.info.oblong_pixel {
-            unimplemented!("oblong_pixel");
-        }
-
-
         let buf = &self.buf;
         let mut header_buf = Cursor::new(buf[range(self.header_offset, HEADER_SIZE)].to_owned());
         header_buf.seek(SeekFrom::Start(12))?;
@@ -253,8 +248,12 @@ impl Decoder {
             }
         }
 
-
-        Ok(img)
+        if self.info.is_200_line_mode {
+            Ok(imageops::resize(&img, self.info.width as u32, self.info.height as u32 * 2,
+                                FilterType::Nearest))
+        } else {
+            Ok(img)
+        }
     }
 
     fn init_copy_vec(&self) -> Vec<(u32, u32)> {
