@@ -1,4 +1,4 @@
-# MAG v2 image decoder
+# MAG image decoder
 
 [MAG format](https://ja.wikipedia.org/?curid=115972) is also known as MAKI02, Maki-chan Graphics.
 

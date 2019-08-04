@@ -49,7 +49,7 @@ pub struct ImageInfo {
     pub height: u16,
     /// The number of colors, 16 or 256
     pub num_colors: u16,
-    /// The pixel aspect ratio flag
+    /// The rectangular pixel aspect ratio flag
     pub is_200_line_mode: bool,
 }
 
