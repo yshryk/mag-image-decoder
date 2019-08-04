@@ -158,6 +158,11 @@ impl Decoder {
 
     /// Decodes to RGB image buffer
     pub fn decode(&self) -> Result<RgbImage> {
+        if self.info.oblong_pixel {
+            unimplemented!("oblong_pixel");
+        }
+
+
         let buf = &self.buf;
         let mut header_buf = Cursor::new(buf[range(self.header_offset, HEADER_SIZE)].to_owned());
         header_buf.seek(SeekFrom::Start(12))?;
@@ -202,7 +207,7 @@ impl Decoder {
                 if flag == 0 {
                     match self.color_mode {
                         ColorMode::Palette16 => {
-                            for _ in 0..=1 {
+                            for _ in 0..2 {
                                 let pixel_byte = pixels.read_u8().unwrap();
                                 img.put_pixel(dst_x, y, palette.rgb(nibble_high(pixel_byte)));
                                 dst_x += 1;
@@ -210,7 +215,13 @@ impl Decoder {
                                 dst_x += 1;
                             }
                         }
-                        ColorMode::Palette256 => unimplemented!("256 mode"),
+                        ColorMode::Palette256 => {
+                            for _ in 0..2 {
+                                let pixel_byte = pixels.read_u8().unwrap();
+                                img.put_pixel(dst_x, y, palette.rgb(pixel_byte));
+                                dst_x += 1;
+                            }
+                        }
                     }
                 } else {
                     dst_x += self.copy_pixel_unit(&mut img, dst_x, y, copy_vec[flag as usize]);

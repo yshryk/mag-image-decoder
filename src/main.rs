@@ -7,9 +7,12 @@ use log::info;
 fn main() {
     simple_logger::init().expect("logger init error");
 
-    let path = "FGALS.MAG";
+    let path = "SAMPLE.MAG";
+//    let path = "SAMPLE2.MAG";
+//    let path = "FGALS.MAG";
 //    let path = "CPU&WAKA.MAG";
 //    let path = "OENM0001.MAG";
+//    let path = "WSNKM042.MAG";
     let file = File::open(path).expect("failed to open file");
     let decoder = Decoder::new(BufReader::new(file)).expect("failed to read header");
     let header = decoder.info();
