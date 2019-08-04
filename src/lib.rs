@@ -1,3 +1,20 @@
+//! MAG v2 image decoder
+//!
+//! [MAG format](https://ja.wikipedia.org/?curid=115972) is also known as MAKI02, Maki-chan Graphics.
+//!
+//! # Examples
+//! ```
+//! use std::fs::File;
+//! use std::io::BufReader;
+//! use mag_image_decoder::Decoder;
+//!
+//! let file = File::open("SAMPLE.MAG").unwrap();
+//! let decoder = Decoder::new(BufReader::new(file)).unwrap();
+//! let header = decoder.info();
+//! let img = decoder.decode().unwrap();
+//! img.save("SAMPLE.png").unwrap();
+//! ```
+
 use std::io::{Cursor, Read, Seek, SeekFrom};
 
 use byteorder::{LittleEndian as LE, ReadBytesExt};
