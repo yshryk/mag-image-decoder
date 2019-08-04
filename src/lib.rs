@@ -190,14 +190,14 @@ impl Decoder {
                flag_a_offset, flag_b_offset, flag_a_size, flag_b_size, pixel_offset, pixel_size);
         assert_eq!(header_buf.position() as u32, HEADER_SIZE);
 
-        let palette = &buf[range(self.header_offset + HEADER_SIZE, (self.info.num_colors * 3) as u32)];
+        let palette = &buf[range(self.header_offset + HEADER_SIZE, u32::from(self.info.num_colors * 3))];
         let flag_a = &buf[range(self.header_offset + flag_a_offset, flag_a_size)];
         let flag_b = &buf[range(self.header_offset + flag_b_offset, flag_b_size)];
         let pixels = &buf[range(self.header_offset + pixel_offset, pixel_size)];
 //        dbg!(flag_a.len(), flag_b.len(), pixels.len());
 //        dbg!(buf.len() - (self.header_offset + pixel_offset + pixel_size) as usize);
 
-        let mut img: RgbImage = ImageBuffer::new(self.info.width as u32, self.info.height as u32);
+        let mut img: RgbImage = ImageBuffer::new(u32::from(self.info.width), u32::from(self.info.height));
         let pixel_unit = pixel_unit(self.color_mode);
         let num_x_units = self.info.width / pixel_unit;
 
@@ -208,7 +208,7 @@ impl Decoder {
         let mut line_flags = vec![0u8; num_x_units as usize];
         let copy_vec = self.init_copy_vec();
 
-        for y in 0..self.info.height as u32 {
+        for y in 0..u32::from(self.info.height) {
             for x in 0..num_x_units as usize {
                 if let Some(true) = flag_a_bits.next() {
                     line_flags[x] ^= flag_b.read_u8()?;
@@ -249,7 +249,7 @@ impl Decoder {
         }
 
         if self.info.is_200_line_mode {
-            Ok(imageops::resize(&img, self.info.width as u32, self.info.height as u32 * 2,
+            Ok(imageops::resize(&img, u32::from(self.info.width), u32::from(self.info.height) * 2,
                                 FilterType::Nearest))
         } else {
             Ok(img)
