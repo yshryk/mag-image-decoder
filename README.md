@@ -4,6 +4,13 @@
 
 [Documentation](https://docs.rs/mag-image-decoder)
 
+## Supported Features
+* 16-color mode
+* 256-color mode
+
+## Unsupported Features
+* 200-line mode
+
 ## Decoding
 
 Cargo.toml:
