@@ -9,7 +9,7 @@ use std::ops::Range;
 use image::{ImageBuffer, RgbImage, Rgb};
 use bit_vec::BitVec;
 
-mod error;
+pub mod error;
 
 /// Represents metadata of an image.
 #[derive(Clone, Debug, PartialEq)]
