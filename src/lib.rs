@@ -29,9 +29,9 @@ pub struct ImageInfo {
     pub width: u16,
     /// The height of the image, in pixels
     pub height: u16,
-    /// The number of colors, 16 of 256
+    /// The number of colors, 16 or 256
     pub num_colors: u16,
-    /// The pixel shape
+    /// The pixel aspect ratio
     pub oblong_pixel: bool,
 }
 
