@@ -37,6 +37,8 @@ img.save("SAMPLE.png").expect("failed to save image");
 % cargo build --release
 % ./target/release/magdecode --help
 % ./target/release/magdecode --outdir out *.MAG
+% file out/SAMPLE.png
+out/SAMPLE.png: PNG image data, 640 x 480, 8-bit/color RGB, non-interlaced
 ```
 
 ## License
