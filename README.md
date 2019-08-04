@@ -31,6 +31,14 @@ let img = decoder.decode().expect("failed to decode image");
 img.save("SAMPLE.png").expect("failed to save image");
 ```
 
+## CLI Tool
+
+```shell
+% cargo build --release
+% ./target/release/magdecode --help
+% ./target/release/magdecode --outdir out *.MAG
+```
+
 ## License
 
 Licensed under either of
