@@ -208,44 +208,45 @@ impl Decoder {
         let mut line_flags = vec![0u8; num_x_units as usize];
         let copy_vec = self.init_copy_vec();
 
-        let mut decode_nibble = |dst_x: &mut u32, y: u32, flag: u8| {
+        let mut decode_nibble = |dst_x: u32, y: u32, flag: u8| -> u32 {
             if flag == 0 {
+                let mut dst_x: u32 = dst_x;
                 match self.color_mode {
                     ColorMode::Palette16 => {
                         for _ in 0..2 {
                             let pixel_byte = pixels.read_u8().unwrap();
-                            img.put_pixel(*dst_x, y, palette.rgb(nibble_high(pixel_byte)));
-                            *dst_x += 1;
-                            img.put_pixel(*dst_x, y, palette.rgb(nibble_low(pixel_byte)));
-                            *dst_x += 1;
+                            img.put_pixel(dst_x, y, palette.rgb(nibble_high(pixel_byte)));
+                            dst_x += 1;
+                            img.put_pixel(dst_x, y, palette.rgb(nibble_low(pixel_byte)));
+                            dst_x += 1;
                         }
                     }
                     ColorMode::Palette256 => {
                         for _ in 0..2 {
                             let pixel_byte = pixels.read_u8().unwrap();
-                            img.put_pixel(*dst_x, y, palette.rgb(pixel_byte));
-                            *dst_x += 1;
+                            img.put_pixel(dst_x, y, palette.rgb(pixel_byte));
+                            dst_x += 1;
                         }
                     }
                 }
+                dst_x
             } else {
-                *dst_x += self.copy_pixel_unit(&mut img, *dst_x, y, copy_vec[flag as usize]);
+                dst_x + self.copy_pixel_unit(&mut img, dst_x, y, copy_vec[flag as usize])
             }
         };
 
         for y in 0..u32::from(self.info.height) {
-            for x in 0..num_x_units as usize {
+            for flag in line_flags.iter_mut() {
                 if let Some(true) = flag_a_bits.next() {
-                    line_flags[x] ^= flag_b.read_u8()?;
+                    *flag ^= flag_b.read_u8()?;
                 }
             }
 
             let mut dst_x = 0;
 
-            for x in 0..num_x_units as usize {
-                let flag = line_flags[x];
-                decode_nibble(&mut dst_x, y, nibble_high(flag));
-                decode_nibble(&mut dst_x, y, nibble_low(flag));
+            for &flag in line_flags.iter() {
+                dst_x = decode_nibble(dst_x, y, nibble_high(flag));
+                dst_x = decode_nibble(dst_x, y, nibble_low(flag));
             }
         }
 
