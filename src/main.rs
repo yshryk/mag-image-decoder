@@ -25,8 +25,18 @@ struct Opt {
     files: Vec<PathBuf>,
 }
 
+#[cfg(not(windows))]
+fn parse_args() -> Opt {
+    Opt::from_args()
+}
+
+#[cfg(windows)]
+fn parse_args() -> Opt {
+    Opt::from_iter(wild::args())
+}
+
 fn main() {
-    match run(Opt::from_args()) {
+    match run(parse_args()) {
         Ok(_) => (),
         Err(e) => {
             eprintln!("Error: {}", e);

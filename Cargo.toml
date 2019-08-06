@@ -33,3 +33,6 @@ encoding_rs = "0.8"
 image = "0.22"
 bit-vec = "0.6"
 structopt = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+wild = "2.0"
