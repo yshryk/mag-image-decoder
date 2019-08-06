@@ -17,15 +17,15 @@
 //! ```
 
 use std::io::{Cursor, Read, Seek, SeekFrom};
+use std::ops::Range;
 
+use bit_vec::BitVec;
 use byteorder::{LittleEndian as LE, ReadBytesExt};
 use encoding_rs::*;
+use image::{FilterType, ImageBuffer, imageops, Rgb, RgbImage};
 use log::debug;
 
 pub use crate::error::*;
-use std::ops::Range;
-use image::{ImageBuffer, RgbImage, Rgb, imageops, FilterType};
-use bit_vec::BitVec;
 
 pub mod error;
 
@@ -208,6 +208,31 @@ impl Decoder {
         let mut line_flags = vec![0u8; num_x_units as usize];
         let copy_vec = self.init_copy_vec();
 
+        let mut decode_nibble = |dst_x: &mut u32, y: u32, flag: u8| {
+            if flag == 0 {
+                match self.color_mode {
+                    ColorMode::Palette16 => {
+                        for _ in 0..2 {
+                            let pixel_byte = pixels.read_u8().unwrap();
+                            img.put_pixel(*dst_x, y, palette.rgb(nibble_high(pixel_byte)));
+                            *dst_x += 1;
+                            img.put_pixel(*dst_x, y, palette.rgb(nibble_low(pixel_byte)));
+                            *dst_x += 1;
+                        }
+                    }
+                    ColorMode::Palette256 => {
+                        for _ in 0..2 {
+                            let pixel_byte = pixels.read_u8().unwrap();
+                            img.put_pixel(*dst_x, y, palette.rgb(pixel_byte));
+                            *dst_x += 1;
+                        }
+                    }
+                }
+            } else {
+                *dst_x += self.copy_pixel_unit(&mut img, *dst_x, y, copy_vec[flag as usize]);
+            }
+        };
+
         for y in 0..u32::from(self.info.height) {
             for x in 0..num_x_units as usize {
                 if let Some(true) = flag_a_bits.next() {
@@ -216,35 +241,11 @@ impl Decoder {
             }
 
             let mut dst_x = 0;
-            let mut decode_nibble = |flag: u8| {
-                if flag == 0 {
-                    match self.color_mode {
-                        ColorMode::Palette16 => {
-                            for _ in 0..2 {
-                                let pixel_byte = pixels.read_u8().unwrap();
-                                img.put_pixel(dst_x, y, palette.rgb(nibble_high(pixel_byte)));
-                                dst_x += 1;
-                                img.put_pixel(dst_x, y, palette.rgb(nibble_low(pixel_byte)));
-                                dst_x += 1;
-                            }
-                        }
-                        ColorMode::Palette256 => {
-                            for _ in 0..2 {
-                                let pixel_byte = pixels.read_u8().unwrap();
-                                img.put_pixel(dst_x, y, palette.rgb(pixel_byte));
-                                dst_x += 1;
-                            }
-                        }
-                    }
-                } else {
-                    dst_x += self.copy_pixel_unit(&mut img, dst_x, y, copy_vec[flag as usize]);
-                }
-            };
 
             for x in 0..num_x_units as usize {
                 let flag = line_flags[x];
-                decode_nibble(nibble_high(flag));
-                decode_nibble(nibble_low(flag));
+                decode_nibble(&mut dst_x, y, nibble_high(flag));
+                decode_nibble(&mut dst_x, y, nibble_low(flag));
             }
         }
 
