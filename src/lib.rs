@@ -208,9 +208,8 @@ impl Decoder {
         let mut line_flags = vec![0u8; num_x_units as usize];
         let copy_vec = self.init_copy_vec();
 
-        let mut decode_nibble = |dst_x: u32, y: u32, flag: u8| -> u32 {
+        let mut decode_nibble = |mut dst_x: u32, y: u32, flag: u8| -> u32 {
             if flag == 0 {
-                let mut dst_x: u32 = dst_x;
                 match self.color_mode {
                     ColorMode::Palette16 => {
                         for _ in 0..2 {
