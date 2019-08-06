@@ -3,7 +3,7 @@
 //! [MAG format](https://ja.wikipedia.org/?curid=115972) is also known as MAKI02, Maki-chan Graphics.
 //!
 //! # Examples
-//! ```
+//! ```no_run
 //! use std::fs::File;
 //! use std::io::BufReader;
 //! use mag_image_decoder::Decoder;
